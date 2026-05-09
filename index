@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCハードウェア学習クイズ</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f8f7f4;
+    --card: #ffffff;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --text: #1a1a18;
+    --text2: #6b6b65;
+    --text3: #9a9a94;
+    --purple: #7F77DD;
+    --purple-light: #EEEDFE;
+    --purple-dark: #3C3489;
+    --green-light: #EAF3DE;
+    --green-dark: #27500A;
+    --green-border: #639922;
+    --red-light: #FCEBEB;
+    --red-dark: #791F1F;
+    --red-border: #E24B4A;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px 16px 48px;
+  }
+  .container { width: 100%; max-width: 640px; }
+
+  /* ===== PASSWORD SCREEN ===== */
+  #pw-screen {
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
+  .pw-card {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem 2rem 1.75rem;
+    width: 100%;
+    max-width: 360px;
+  }
+  .pw-icon {
+    width: 48px; height: 48px;
+    background: var(--purple-light);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin: 0 auto 1.25rem;
+  }
+  .pw-title {
+    font-size: 18px; font-weight: 500;
+    text-align: center; margin-bottom: 4px;
+  }
+  .pw-sub {
+    font-size: 13px; color: var(--text2);
+    text-align: center; margin-bottom: 1.5rem;
+  }
+  .pw-input-wrap { position: relative; margin-bottom: 10px; }
+  .pw-input {
+    width: 100%; padding: 11px 40px 11px 14px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    font-size: 15px; background: var(--card); color: var(--text);
+    outline: none; transition: border-color 0.15s;
+    letter-spacing: 2px;
+  }
+  .pw-input:focus { border-color: var(--purple); }
+  .pw-toggle {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    color: var(--text3); font-size: 16px; padding: 0;
+  }
+  .pw-btn {
+    width: 100%; padding: 11px;
+    background: var(--purple); color: #fff;
+    border: none; border-radius: var(--radius);
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .pw-btn:hover { opacity: 0.88; }
+  .pw-error {
+    font-size: 12px; color: var(--red-dark);
+    text-align: center; margin-top: 10px; min-height: 18px;
+  }
+  .pw-hint { font-size: 12px; color: var(--text3); text-align: center; margin-top: 1rem; }
+
+  /* ===== APP ===== */
+  #app { display: none; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 0 1.25rem;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 1.25rem;
+  }
+  .header-title { font-size: 16px; font-weight: 500; }
+  .header-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .logout-btn {
+    font-size: 12px; color: var(--text3);
+    background: none; border: 0.5px solid var(--border);
+    border-radius: 20px; padding: 4px 12px; cursor: pointer;
+  }
+  .logout-btn:hover { color: var(--text2); }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .stat-card { background: #f1efe8; border-radius: var(--radius); padding: 12px; text-align: center; }
+  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .stat-num { font-size: 22px; font-weight: 500; }
+
+  .section-label { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+  .topic-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .topic-pill {
+    font-size: 12px; padding: 5px 12px;
+    border-radius: 20px; border: 0.5px solid var(--border2);
+    background: #f1efe8; color: var(--text2);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .topic-pill.active { background: var(--purple-light); border-color: var(--purple); color: var(--purple-dark); }
+
+  .gen-area { margin-bottom: 1rem; }
+  .gen-status { font-size: 13px; color: var(--text2); margin-bottom: 8px; }
+  .gen-btn {
+    font-size: 12px; padding: 6px 14px;
+    border-radius: 20px; border: 0.5px solid var(--border2);
+    background: var(--card); color: var(--text2);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .gen-btn:hover { background: #f1efe8; }
+  .gen-btn:disabled { opacity: 0.5; cursor: default; }
+  .gen-bar-wrap { width: 100%; height: 3px; background: #e8e6df; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .gen-bar-fill { height: 100%; width: 0%; background: var(--purple); border-radius: 2px; transition: width 0.4s; }
+
+  .start-btn {
+    width: 100%; padding: 13px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-lg);
+    background: var(--purple); color: #fff;
+    font-size: 15px; font-weight: 500; cursor: pointer;
+    transition: opacity 0.15s; margin-top: 0.25rem;
+  }
+  .start-btn:hover { opacity: 0.88; }
+
+  /* quiz */
+  .prog-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .prog-wrap { background: #e8e6df; border-radius: 4px; height: 4px; margin-bottom: 1.25rem; overflow: hidden; }
+  .prog-fill { height: 100%; background: var(--purple); border-radius: 4px; transition: width 0.3s; }
+
+  .q-card {
+    background: var(--card); border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .q-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; background: #f1efe8; color: var(--text2);
+    padding: 3px 10px; border-radius: 12px; margin-bottom: 12px;
+  }
+  .q-text { font-size: 15px; font-weight: 500; line-height: 1.6; margin-bottom: 1rem; }
+  .opts { display: flex; flex-direction: column; gap: 8px; }
+  .opt {
+    text-align: left; padding: 11px 14px;
+    border: 0.5px solid var(--border2); border-radius: var(--radius);
+    background: var(--card); color: var(--text);
+    font-size: 14px; cursor: pointer; transition: all 0.15s; line-height: 1.5;
+    font-family: inherit;
+  }
+  .opt:hover:not(:disabled) { background: #f1efe8; }
+  .opt:disabled { cursor: default; }
+  .opt.correct { background: var(--green-light); border-color: var(--green-border); color: var(--green-dark); }
+  .opt.wrong { background: var(--red-light); border-color: var(--red-border); color: var(--red-dark); }
+  .tf-row { display: flex; gap: 10px; }
+  .tf-btn {
+    flex: 1; padding: 14px; font-size: 18px;
+    border: 0.5px solid var(--border2); border-radius: var(--radius);
+    background: var(--card); color: var(--text);
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .tf-btn:hover:not(:disabled) { background: #f1efe8; }
+  .tf-btn:disabled { cursor: default; }
+  .tf-btn.correct { background: var(--green-light); border-color: var(--green-border); color: var(--green-dark); }
+  .tf-btn.wrong { background: var(--red-light); border-color: var(--red-border); color: var(--red-dark); }
+  .feedback {
+    margin-top: 12px; padding: 12px 14px;
+    border-radius: var(--radius); font-size: 13px; line-height: 1.7;
+  }
+  .feedback.ok { background: var(--green-light); color: var(--green-dark); }
+  .feedback.ng { background: var(--red-light); color: var(--red-dark); }
+  .fb-label { font-weight: 500; margin-bottom: 4px; }
+  .next-btn {
+    margin-top: 1rem; width: 100%; padding: 12px;
+    border: 0.5px solid var(--border2); border-radius: var(--radius);
+    background: #f1efe8; color: var(--text);
+    font-size: 14px; cursor: pointer; font-family: inherit;
+  }
+  .next-btn:hover { background: var(--card); }
+
+  /* result */
+  .result-center { text-align: center; padding: 2rem 0 1.5rem; }
+  .result-score { font-size: 64px; font-weight: 500; line-height: 1; }
+  .result-denom { font-size: 20px; color: var(--text2); margin-top: 4px; }
+  .result-msg { font-size: 14px; color: var(--text2); margin-top: 12px; }
+  .result-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 1.25rem; }
+  .result-log { margin-top: 1.5rem; border-top: 0.5px solid var(--border); padding-top: 1rem; }
+  .log-title { font-size: 13px; font-weight: 500; margin-bottom: 12px; }
+  .log-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .log-icon { min-width: 18px; margin-top: 1px; }
+  .log-q { color: var(--text); line-height: 1.5; }
+  .log-ans { color: var(--text2); font-size: 12px; margin-top: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- PASSWORD SCREEN -->
+  <div id="pw-screen">
+    <div class="pw-card">
+      <div class="pw-icon">&#128274;</div>
+      <div class="pw-title">PCハードウェア学習クイズ</div>
+      <div class="pw-sub">アクセスにはパスワードが必要です</div>
+      <div class="pw-input-wrap">
+        <input type="password" class="pw-input" id="pw-input" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')checkPw()">
+        <button class="pw-toggle" onclick="togglePw()" id="pw-toggle-btn">&#128065;</button>
+      </div>
+      <button class="pw-btn" onclick="checkPw()">ログイン</button>
+      <div class="pw-error" id="pw-error"></div>
+      <div class="pw-hint">※ パスワードは管理者にお問い合わせください</div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app">
+    <header>
+      <div>
+        <div class="header-title">PCハードウェア学習クイズ</div>
+        <div class="header-sub" id="header-sub">問題を読み込み中...</div>
+      </div>
+      <button class="logout-btn" onclick="logout()">ログアウト</button>
+    </header>
+
+    <!-- HOME -->
+    <div id="screen-home" class="screen active">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">収録問題数</div><div class="stat-num" id="s-total">0</div></div>
+        <div class="stat-card"><div class="stat-label">累計正解</div><div class="stat-num" id="s-correct">0</div></div>
+        <div class="stat-card"><div class="stat-label">正答率</div><div class="stat-num" id="s-rate">-</div></div>
+      </div>
+      <div class="section-label">テーマ絞り込み（複数選択可）</div>
+      <div class="topic-bar" id="topic-bar"></div>
+      <div class="gen-area" id="gen-area"></div>
+      <button class="start-btn" id="start-btn" onclick="startQuiz()">20問スタート</button>
+    </div>
+
+    <!-- QUIZ -->
+    <div id="screen-quiz" class="screen">
+      <div class="prog-label">
+        <span id="q-counter">問題 1 / 20</span>
+        <span id="q-topic-label"></span>
+      </div>
+      <div class="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      <div id="quiz-area"></div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="screen-result" class="screen">
+      <div class="result-center">
+        <div class="result-score" id="r-score">0</div>
+        <div class="result-denom">/ 20問</div>
+        <div class="result-msg" id="r-msg"></div>
+      </div>
+      <div class="result-actions">
+        <button class="start-btn" onclick="startQuiz()">もう一度 20問チャレンジ</button>
+        <button class="next-btn" onclick="showScreen('screen-home')">トップへ戻る</button>
+      </div>
+      <div class="result-log" id="result-log"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// パスワード設定 — ここを変更してください
+// ============================================================
+const PASSWORD = "hardware2024";
+// ============================================================
+
+const TOPICS = ["マザーボード基礎","CPUソケット・VRM","メモリ(RAM)","ストレージ","拡張スロット","チップセット","電源・フォームファクター","BIOS・UEFI","ネットワーク・I/O","PC組み立て"];
+
+const SEED_QUESTIONS = [
+  {t:"マザーボード基礎",type:"4択",q:"マザーボードの主な役割は？",opts:["音声処理","各パーツの接続・通信","映像出力","データ保存"],ans:1,exp:"マザーボードはCPU・メモリ・ストレージなど全パーツをつなぐ基盤です。"},
+  {t:"マザーボード基礎",type:"○×",q:"ATXはマザーボードのフォームファクター規格の一種である。",ans:true,exp:"ATXは305×244mmの標準的なフォームファクターで最も普及しています。"},
+  {t:"マザーボード基礎",type:"4択",q:"マザーボード上でCPUを取り付ける部分の名称は？",opts:["PCIeスロット","CPUソケット","DIMMスロット","M.2スロット"],ans:1,exp:"CPUソケットはCPUを固定・接続する部分。IntelとAMDで形状が異なります。"},
+  {t:"マザーボード基礎",type:"○×",q:"Mini-ITXはATXよりも大きいフォームファクターである。",ans:false,exp:"Mini-ITXは170×170mmで、ATX(305×244mm)より大幅に小さい規格です。"},
+  {t:"マザーボード基礎",type:"4択",q:"マザーボードに電源を供給するメインコネクタは何ピンか？",opts:["20ピン","24ピン","8ピン","4ピン"],ans:1,exp:"現代のATX電源はマザーボードに24ピンのコネクタで接続します。"},
+  {t:"マザーボード基礎",type:"○×",q:"CMOSバッテリーはBIOS設定と時計を維持する役割がある。",ans:true,exp:"CMOSバッテリー(CR2032等)はPC電源オフ時もBIOS設定・日時を保持します。"},
+  {t:"マザーボード基礎",type:"4択",q:"Micro-ATXのサイズはどれか？",opts:["305×244mm","244×244mm","170×170mm","380×305mm"],ans:1,exp:"Micro-ATXは244×244mmで、ATXより小さくMini-ITXより大きい中間サイズです。"},
+  {t:"マザーボード基礎",type:"○×",q:"E-ATXはATXより大きいフォームファクターである。",ans:true,exp:"E-ATX(Extended ATX)は305×330mm程度でATXより横幅が広い上位規格です。"},
+  {t:"マザーボード基礎",type:"4択",q:"マザーボードのPCBに使われる主な素材は？",opts:["アルミニウム","ガラス繊維エポキシ樹脂(FR4)","シリコン","銅"],ans:1,exp:"PCB(プリント基板)はFR4と呼ばれるガラス繊維強化エポキシ樹脂が一般的です。"},
+  {t:"マザーボード基礎",type:"○×",q:"マザーボードはCPUなしでも正常に動作できる。",ans:false,exp:"CPUはマザーボードの中核部品であり、CPUなしでは動作しません。"},
+  {t:"CPUソケット・VRM",type:"4択",q:"VRMの役割は？",opts:["映像信号変換","CPUへの安定した電力供給","メモリのエラー訂正","冷却ファン制御"],ans:1,exp:"VRM(Voltage Regulator Module)は電源の電圧をCPUが必要とする低電圧に変換・安定化します。"},
+  {t:"CPUソケット・VRM",type:"○×",q:"Intel LGA1700ソケットはAMD AM5ソケットと互換性がある。",ans:false,exp:"IntelとAMDはソケット規格が異なり互換性はありません。"},
+  {t:"CPUソケット・VRM",type:"4択",q:"LGAソケットとPGAソケットの違いは？",opts:["LGAはピンがCPU側、PGAはマザーボード側","LGAはピンがマザーボード側、PGAはCPU側","両方同じ","LGAは古い規格"],ans:1,exp:"LGA(Land Grid Array)はピンがマザーボード側、PGA(Pin Grid Array)はCPU側にピンがあります。"},
+  {t:"CPUソケット・VRM",type:"○×",q:"VRMのフェーズ数が多いほど電力供給が安定する傾向がある。",ans:true,exp:"フェーズ数が多いと電流を分散でき、ノイズが減り安定した電力供給が可能です。"},
+  {t:"CPUソケット・VRM",type:"4択",q:"AMD AM5ソケットが採用しているピン配列方式は？",opts:["PGA","LGA","BGA","ZIF"],ans:1,exp:"AM5からAMDもLGA方式を採用。ピンがマザーボード側になりました(AM4まではPGA)。"},
+  {t:"CPUソケット・VRM",type:"○×",q:"Intel第12世代以降のCPUはLGA1200ソケットで使用できる。",ans:false,exp:"第12世代(Alder Lake)以降はLGA1700ソケットが必要です。LGA1200は第10/11世代用です。"},
+  {t:"メモリ(RAM)",type:"4択",q:"DIMMスロットに取り付けるものは？",opts:["CPU","RAM","SSD","GPU"],ans:1,exp:"DIMM(Dual In-line Memory Module)スロットはRAM(メモリ)を取り付ける場所です。"},
+  {t:"メモリ(RAM)",type:"○×",q:"デュアルチャネルメモリは2枚のメモリを並列動作させる技術である。",ans:true,exp:"デュアルチャネルにより帯域幅が約2倍になりシステム性能が向上します。"},
+  {t:"メモリ(RAM)",type:"4択",q:"DDR5メモリの動作電圧はDDR4より？",opts:["高い(1.5V→1.8V)","低い(1.35V→1.1V)","同じ(1.35V)","2倍(2.7V)"],ans:1,exp:"DDR5は1.1VでDDR4の1.35Vより低消費電力かつ高速です。"},
+  {t:"メモリ(RAM)",type:"○×",q:"DDR4とDDR5メモリは同じスロットに取り付けられる。",ans:false,exp:"DDR4とDDR5はノッチ(切り欠き)の位置が異なり物理的に互換性がありません。"},
+  {t:"メモリ(RAM)",type:"4択",q:"XMPとは何か？",opts:["CPUオーバークロック規格","IntelのメモリOC設定規格","AMD専用メモリ規格","SSD高速化規格"],ans:1,exp:"XMP(Extreme Memory Profile)はIntelが策定したメモリのオーバークロック設定規格です。"},
+  {t:"メモリ(RAM)",type:"○×",q:"ECC(Error Correcting Code)メモリはエラーを自動修正できる。",ans:true,exp:"ECCメモリは1ビットエラーの自動修正、2ビットエラーの検出が可能です。"},
+  {t:"メモリ(RAM)",type:"4択",q:"メモリのレイテンシ(CL)とは？",opts:["転送速度(MHz)","コマンド応答までのサイクル数","消費電力","容量(GB)"],ans:1,exp:"CAS Latency(CL)はメモリコントローラからのコマンド後、データ出力までのサイクル数です。"},
+  {t:"メモリ(RAM)",type:"○×",q:"クアッドチャネルメモリ構成には4枚のメモリが必要である。",ans:true,exp:"クアッドチャネルは4枚のメモリを使い、帯域幅をシングルチャネルの4倍にします。"},
+  {t:"ストレージ",type:"4択",q:"M.2スロットで使える接続規格は？",opts:["PCIe/NVMeのみ","SATAのみ","PCIe/NVMeとSATAの両方","USB4のみ"],ans:2,exp:"M.2スロットはNVMe(PCIe)とSATA接続の両方に対応できます(マザーボードによる)。"},
+  {t:"ストレージ",type:"○×",q:"NVMe SSDはSATA SSDより高速である。",ans:true,exp:"NVMeはPCIeを使い最大7000MB/s以上、SATAは最大約600MB/sと大きな差があります。"},
+  {t:"ストレージ",type:"4択",q:"SATAポートの最大転送速度は？",opts:["150MB/s","300MB/s","600MB/s","1200MB/s"],ans:2,exp:"SATA IIIの最大転送速度は6Gbps(実効約600MB/s)です。"},
+  {t:"ストレージ",type:"○×",q:"M.2フォームファクターのSSDは全てNVMe接続である。",ans:false,exp:"M.2スロットにはSATA接続のSSDも存在します。接続方式はキー形状で判断できます。"},
+  {t:"ストレージ",type:"4択",q:"PCIe 4.0 NVMe SSDの最大帯域幅はPCIe 3.0の何倍か？",opts:["同じ","約1.5倍","約2倍","約4倍"],ans:2,exp:"PCIe 4.0は1レーンあたり2GB/sでPCIe 3.0の1GB/sの約2倍の帯域幅です。"},
+  {t:"ストレージ",type:"○×",q:"SATAケーブルはホットプラグ(電源オン中の抜き差し)に対応している。",ans:true,exp:"SATA規格はホットプラグをサポートしており、OSが対応していれば電源オン中でも着脱可能です。"},
+  {t:"ストレージ",type:"4択",q:"RAID 1の主な目的は？",opts:["速度向上","データの冗長性(ミラーリング)","容量の最大化","コスト削減"],ans:1,exp:"RAID 1はミラーリングで2台に同じデータを書き込み、1台故障してもデータが守られます。"},
+  {t:"拡張スロット",type:"4択",q:"PCIe x16スロットの主な用途は？",opts:["SSD接続","GPUの装着","USB増設","電源供給"],ans:1,exp:"PCIe x16スロットはグラフィックカード(GPU)を取り付けるための主要なスロットです。"},
+  {t:"拡張スロット",type:"○×",q:"PCIe x4のカードはx16スロットに装着して動作させることができる。",ans:true,exp:"PCIeはレーン数に対して上位互換があり、x4カードをx16スロットに挿して使用できます。"},
+  {t:"拡張スロット",type:"4択",q:"PCIe 5.0のx16双方向帯域幅は？",opts:["16GB/s","32GB/s","64GB/s","128GB/s"],ans:2,exp:"PCIe 5.0はレーンあたり4GB/s×16=64GB/sの双方向帯域幅を持ちます。"},
+  {t:"拡張スロット",type:"○×",q:"PCIe x1スロットはx16スロットより物理的に長い。",ans:false,exp:"PCIe x16スロットの方が長く、レーン数が多いほどコネクタが長くなります。"},
+  {t:"拡張スロット",type:"4択",q:"NVMe SSDをM.2スロット以外で使う方法は？",opts:["SATA変換","PCIe変換アダプター経由","USB接続","AGPスロット"],ans:1,exp:"NVMe SSDはM.2→PCIe変換アダプターを使いPCIeスロットに直接装着できます。"},
+  {t:"チップセット",type:"4択",q:"チップセットの主な役割は？",opts:["映像処理","CPUと周辺コンポーネントの通信管理","メモリエラー訂正","電圧変換"],ans:1,exp:"チップセットはCPUとUSBやSATAなど直接つながらない周辺機器の橋渡しをします。"},
+  {t:"チップセット",type:"○×",q:"IntelのZシリーズチップセットはCPUオーバークロックに対応する。",ans:true,exp:"Intel Z790などZシリーズはアンロックCPU(末尾K)のOCをサポートします。"},
+  {t:"チップセット",type:"4択",q:"AMD X670とB650の主な違いは？",opts:["X670の方が安価","X670の方が拡張性・OC機能が高い","B650の方が高性能","違いはない"],ans:1,exp:"X670はB650より上位でPCIe 5.0対応レーンや電力フェーズなどの仕様が充実しています。"},
+  {t:"チップセット",type:"○×",q:"同じ世代のCPUでもチップセットのグレードによってOC対応が変わる。",ans:true,exp:"例えばIntelのH610はOC非対応ですが、Z790は同じCPUでもオーバークロックが可能です。"},
+  {t:"電源・フォームファクター",type:"4択",q:"ATX12V 2.0以降のCPU補助電源コネクタは何ピンか？",opts:["4ピン","8ピン","12ピン","16ピン"],ans:1,exp:"ATX12V 2.0から8ピン(4+4)のEPS12Vコネクタが標準になりました。"},
+  {t:"電源・フォームファクター",type:"○×",q:"80PLUS Gold認証の電源は50%負荷時に90%以上の変換効率がある。",ans:true,exp:"80PLUS Goldは20%/50%/100%負荷でそれぞれ87%/90%/87%以上の効率が必要です。"},
+  {t:"電源・フォームファクター",type:"4択",q:"SFX電源はどのようなPCケース向けか？",opts:["大型タワーケース","スモールフォームファクター(SFF)ケース","サーバーラック","ノートPC"],ans:1,exp:"SFX電源はATXより小型でMini-ITXなどのコンパクトなSFFケース向けです。"},
+  {t:"電源・フォームファクター",type:"4択",q:"モジュラー電源の利点は？",opts:["変換効率が高い","不要なケーブルを取り外せる","より静かに動作する","電圧が安定する"],ans:1,exp:"フルモジュラー電源は使わないケーブルを外せるためエアフローが改善します。"},
+  {t:"BIOS・UEFI",type:"4択",q:"UEFI BIOSがレガシーBIOSより優れている点は？",opts:["消費電力が低い","2TB超のドライブ起動・GUIサポート","より安価","CPUが速くなる"],ans:1,exp:"UEFIは2TB超のGPTドライブから起動でき、マウス操作のGUI・セキュアブートもサポートします。"},
+  {t:"BIOS・UEFI",type:"○×",q:"POST(Power On Self Test)はBIOSが起動時にハードウェアを確認するプロセスである。",ans:true,exp:"POSTはBIOS/UEFIがCPU・メモリ・ストレージなどを起動時にチェックする自己診断プロセスです。"},
+  {t:"BIOS・UEFI",type:"4択",q:"BIOSのフラッシュとは？",opts:["BIOSを消去する","BIOSファームウェアを更新する","BIOSをリセットする","BIOSを複製する"],ans:1,exp:"BIOSフラッシュはBIOSチップのファームウェアを新バージョンに更新することです。"},
+  {t:"BIOS・UEFI",type:"○×",q:"セキュアブートはマルウェアの起動前実行を防ぐ機能である。",ans:true,exp:"セキュアブートはデジタル署名で検証されたOSのみ起動を許可しルートキット対策になります。"},
+  {t:"BIOS・UEFI",type:"4択",q:"CMOSクリアをするとどうなるか？",opts:["OSが削除される","BIOS設定がデフォルトに戻る","CPUが初期化される","メモリが消去される"],ans:1,exp:"CMOSクリアはBIOS設定(日時・OC設定など)をリセットしますが、ストレージのデータは消えません。"},
+  {t:"BIOS・UEFI",type:"○×",q:"UEFIはMBRパーティション形式のみサポートする。",ans:false,exp:"UEFIは主にGPT(GUIDパーティションテーブル)をサポートし、2TB超ドライブに対応します。"},
+  {t:"ネットワーク・I/O",type:"4択",q:"2.5G Ethernetの転送速度は？",opts:["1Gbps","2.5Gbps","5Gbps","10Gbps"],ans:1,exp:"2.5G Ethernetは2.5Gbpsで、既存CAT5eケーブルで使用可能な次世代規格です。"},
+  {t:"ネットワーク・I/O",type:"○×",q:"USB4はThunderbolt 3と互換性がある。",ans:true,exp:"USB4はThunderbolt 3をベースに策定されており、後方互換性があります。"},
+  {t:"ネットワーク・I/O",type:"4択",q:"Thunderbolt 4の最大転送速度は？",opts:["20Gbps","40Gbps","80Gbps","100Gbps"],ans:1,exp:"Thunderbolt 4は最大40Gbpsの転送速度を持ち、映像出力とデータ転送を一本のケーブルで行えます。"},
+  {t:"ネットワーク・I/O",type:"○×",q:"Wi-Fi 6EはWi-Fi 6より6GHz帯が追加されている。",ans:true,exp:"Wi-Fi 6E(802.11ax)は2.4/5GHzに加えて6GHz帯を追加し、混雑の少ない高速通信が可能です。"},
+  {t:"ネットワーク・I/O",type:"4択",q:"DisplayPortの特徴として正しいのは？",opts:["AV機器専用","デイジーチェーン接続に対応","音声非対応","HDMIより古い規格"],ans:1,exp:"DisplayPortはPC向けで複数モニターのデイジーチェーン接続が可能。音声出力にも対応します。"},
+  {t:"PC組み立て",type:"4択",q:"CPUクーラーのTDPとは？",opts:["CPUの処理速度","冷却できる最大熱量(W)","消費電力の上限","動作温度の上限"],ans:1,exp:"TDP(Thermal Design Power)はクーラーが処理できる最大熱量です。CPUのTDP以上が必要です。"},
+  {t:"PC組み立て",type:"○×",q:"グラフィックカードを取り付ける際はPCIeスロットのラッチを押し込む必要がある。",ans:true,exp:"PCIe x16スロットにはカードを固定するラッチがあり、装着時はカチっと固定されます。"},
+  {t:"PC組み立て",type:"4択",q:"マザーボードをケースに取り付けるスペーサーの目的は？",opts:["冷却効果向上","ショート防止と固定","電力供給","振動吸収"],ans:1,exp:"スペーサー(スタンドオフ)はマザーボードとケース金属部分の間隔を保ちショートを防ぎます。"},
+  {t:"PC組み立て",type:"○×",q:"静電気はPCパーツを破損させる可能性がある。",ans:true,exp:"ESD(静電気放電)は半導体を破損させます。作業前に接地するか静電気防止手袋を使用しましょう。"},
+  {t:"PC組み立て",type:"○×",q:"CPUグリス(サーマルペースト)は定期的に塗り替えることが推奨される。",ans:true,exp:"サーマルペーストは数年で劣化し冷却効率が低下します。2〜5年での塗り替えが推奨されます。"},
+  {t:"PC組み立て",type:"4択",q:"ライザーカードの主な用途は？",opts:["電圧変換","PCIeスロットを延長・方向変換する","冷却効率の改善","USBポートの増設"],ans:1,exp:"ライザーカードはPCIeスロットを延長・垂直方向化するためSFFケースなどで使われます。"},
+];
+
+// ===================== STATE =====================
+let allQuestions = [...SEED_QUESTIONS];
+let sessionQuestions = [], sessionIdx = 0, sessionAnswered = false, sessionLog = [];
+let totalCorrect = 0, totalAnswered = 0;
+let selectedTopics = new Set(TOPICS);
+let generating = false;
+
+// ===================== PASSWORD =====================
+function checkPw() {
+  const val = document.getElementById('pw-input').value;
+  if (val === PASSWORD) {
+    sessionStorage.setItem('quiz_auth', '1');
+    document.getElementById('pw-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    init();
+  } else {
+    document.getElementById('pw-error').textContent = 'パスワードが違います。もう一度お試しください。';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+function togglePw() {
+  const inp = document.getElementById('pw-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function logout() {
+  sessionStorage.removeItem('quiz_auth');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pw-screen').style.display = 'flex';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-error').textContent = '';
+}
+
+// ===================== INIT =====================
+function init() {
+  renderTopicBar();
+  updateStats();
+  renderGenArea();
+  document.getElementById('header-sub').textContent = `${allQuestions.length}問収録 — ランダム20問出題`;
+}
+
+// ===================== TOPICS =====================
+function renderTopicBar() {
+  document.getElementById('topic-bar').innerHTML = TOPICS.map(t => {
+    const cnt = allQuestions.filter(q => q.t === t).length;
+    const act = selectedTopics.has(t);
+    return `<button class="topic-pill${act?' active':''}" onclick="toggleTopic('${t}')">${t} <span style="opacity:.6">${cnt}</span></button>`;
+  }).join('');
+}
+
+function toggleTopic(t) {
+  if (selectedTopics.has(t)) { if (selectedTopics.size > 1) selectedTopics.delete(t); }
+  else selectedTopics.add(t);
+  renderTopicBar();
+}
+
+// ===================== STATS =====================
+function updateStats() {
+  document.getElementById('s-total').textContent = allQuestions.length;
+  document.getElementById('s-correct').textContent = totalCorrect;
+  document.getElementById('s-rate').textContent = totalAnswered ? Math.round(totalCorrect/totalAnswered*100)+'%' : '-';
+}
+
+// ===================== GENERATE =====================
+function renderGenArea() {
+  const ga = document.getElementById('gen-area');
+  if (allQuestions.length >= 200) {
+    ga.innerHTML = `<div class="gen-status">200問達成！全テーマをカバーしています</div>`;
+    return;
+  }
+  ga.innerHTML = `<div class="gen-status">現在 ${allQuestions.length}問収録 — AIでさらに追加できます（目標200問）</div>
+    <button class="gen-btn" id="gen-btn" onclick="generateMore()">AIで問題を追加生成</button>`;
+}
+
+async function generateMore() {
+  if (generating) return;
+  generating = true;
+  const btn = document.getElementById('gen-btn');
+  if (btn) btn.disabled = true;
+  const ga = document.getElementById('gen-area');
+  ga.innerHTML = `<div class="gen-status">AIが問題を生成中です…</div><div class="gen-bar-wrap"><div class="gen-bar-fill" id="gen-fill"></div></div>`;
+  let pct = 0;
+  const timer = setInterval(() => { pct = Math.min(pct+3,88); const f=document.getElementById('gen-fill'); if(f) f.style.width=pct+'%'; }, 200);
+  const existing = allQuestions.map(q=>q.q).slice(0,40).join('\n');
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1000,
+        messages:[{role:'user',content:`マザーボード・PCハードウェア学習クイズ用の問題を20問生成してください。
+テーマ(t): ${TOPICS.join('、')}
+既存問題(重複不可):\n${existing}
+JSON配列のみ返してください(説明文・コードブロック不要):
+[{"t":"テーマ名","type":"4択 または ○×","q":"問題文","opts":["A","B","C","D"],"ans":正解インデックス0-3,"exp":"解説"}]
+○×の場合はoptsを["○","×"]、ansをtrue/falseにしてください。全て日本語、正確な知識で。`}]
+      })
+    });
+    clearInterval(timer);
+    const f=document.getElementById('gen-fill'); if(f) f.style.width='100%';
+    const data = await res.json();
+    const text = data.content?.map(c=>c.text||'').join('')||'';
+    const parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
+    parsed.forEach(q => {
+      if (q.type==='○×') q.ans = (q.ans===0||q.ans===true||q.ans==='○');
+      allQuestions.push(q);
+    });
+    renderTopicBar(); updateStats();
+    document.getElementById('header-sub').textContent = `${allQuestions.length}問収録 — ランダム20問出題`;
+    renderGenArea();
+    const added = document.createElement('div');
+    added.className = 'gen-status'; added.style.marginTop='6px';
+    added.textContent = `+${parsed.length}問追加されました`;
+    document.getElementById('gen-area').appendChild(added);
+  } catch(e) {
+    clearInterval(timer);
+    document.getElementById('gen-area').innerHTML = `<div class="gen-status" style="color:var(--red-dark)">生成に失敗しました。</div>
+      <button class="gen-btn" onclick="generateMore()">再試行</button>`;
+  }
+  generating = false;
+}
+
+// ===================== QUIZ =====================
+function shuffle(a) { return [...a].sort(()=>Math.random()-.5); }
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+function startQuiz() {
+  const pool = shuffle(allQuestions.filter(q=>selectedTopics.has(q.t)));
+  sessionQuestions = pool.slice(0, Math.min(20, pool.length));
+  sessionIdx = 0; sessionLog = [];
+  showScreen('screen-quiz');
+  renderQ();
+}
+
+function renderQ() {
+  const q = sessionQuestions[sessionIdx];
+  const pct = Math.round(sessionIdx/sessionQuestions.length*100);
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('q-counter').textContent = `問題 ${sessionIdx+1} / ${sessionQuestions.length}`;
+  document.getElementById('q-topic-label').textContent = q.t;
+  sessionAnswered = false;
+  let html = `<div class="q-card"><span class="q-badge">${q.type} &nbsp; ${q.t}</span><div class="q-text">${q.q}</div>`;
+  if (q.type==='4択') {
+    html += `<div class="opts">${q.opts.map((o,i)=>`<button class="opt" id="opt-${i}" onclick="ans4(${i})">${o}</button>`).join('')}</div>`;
+  } else {
+    html += `<div class="tf-row"><button class="tf-btn" id="tf-t" onclick="ansTF(true)">○</button><button class="tf-btn" id="tf-f" onclick="ansTF(false)">×</button></div>`;
+  }
+  html += `<div id="fb"></div></div>`;
+  document.getElementById('quiz-area').innerHTML = html;
+}
+
+function ans4(i) {
+  if (sessionAnswered) return; sessionAnswered = true;
+  const q = sessionQuestions[sessionIdx]; const ok = i===q.ans;
+  q.opts.forEach((_,idx)=>{ const b=document.getElementById('opt-'+idx); b.disabled=true; if(idx===q.ans) b.classList.add('correct'); else if(idx===i) b.classList.add('wrong'); });
+  record(ok,q);
+}
+
+function ansTF(val) {
+  if (sessionAnswered) return; sessionAnswered = true;
+  const q = sessionQuestions[sessionIdx]; const ok = val===q.ans;
+  ['tf-t','tf-f'].forEach(id=>document.getElementById(id).disabled=true);
+  document.getElementById(q.ans?'tf-t':'tf-f').classList.add('correct');
+  if (!ok) document.getElementById(val?'tf-t':'tf-f').classList.add('wrong');
+  record(ok,q);
+}
+
+function record(ok,q) {
+  totalAnswered++; if(ok) totalCorrect++;
+  sessionLog.push({q:q.q,ok,exp:q.exp,ans:q.type==='○×'?(q.ans?'○':'×'):q.opts[q.ans]});
+  updateStats();
+  const isLast = sessionIdx>=sessionQuestions.length-1;
+  document.getElementById('fb').innerHTML = `<div class="feedback ${ok?'ok':'ng'}"><div class="fb-label">${ok?'正解！':'不正解'}</div>${q.exp}</div>
+    <button class="next-btn" onclick="${isLast?'showResult()':'nextQ()'}">${isLast?'結果を見る':'次の問題へ'}</button>`;
+}
+
+function nextQ() { sessionIdx++; renderQ(); }
+
+function showResult() {
+  const score = sessionLog.filter(l=>l.ok).length;
+  showScreen('screen-result');
+  document.getElementById('r-score').textContent = score;
+  const pct = Math.round(score/sessionQuestions.length*100);
+  document.getElementById('r-msg').textContent = pct>=90?'素晴らしい！完璧に近い理解です':pct>=70?'よくできました！着実に理解が深まっています':pct>=50?'まだ伸びしろあり！間違えた問題を復習しよう':'もう少し！基礎から見直してみましょう';
+  let html = '<div class="log-title">解答ログ</div>';
+  sessionLog.forEach((l,i)=>{ html+=`<div class="log-item"><span class="log-icon" style="color:${l.ok?'#639922':'#E24B4A'}">${l.ok?'○':'×'}</span><div><div class="log-q">Q${i+1}. ${l.q}</div><div class="log-ans">正解: ${l.ans} — ${l.exp}</div></div></div>`; });
+  document.getElementById('result-log').innerHTML = html;
+}
+
+// Auto-login if already authenticated in session
+if (sessionStorage.getItem('quiz_auth') === '1') {
+  document.getElementById('pw-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  init();
+}
+document.getElementById('pw-input').addEventListener('keydown', e => { if(e.key==='Enter') checkPw(); });
+</script>
+</body>
+</html>
